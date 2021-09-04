@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-import jwt as jwt
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.db import models
 from phonenumber_field import modelfields
 from django.core.exceptions import ValidationError
@@ -72,14 +72,21 @@ class User(AbstractBaseUser, PermissionsMixin):
         Генерирует веб-токен JSON, в котором хранится идентификатор этого
         пользователя, срок действия токена составляет 1 день от создания
         """
-        dt = datetime.now() + timedelta(days=1)
+        # dt = datetime.now() + timedelta(days=1)
+        #
+        # token = jwt.encode({
+        #     'id': self.pk,
+        #     'exp': int(dt.strftime('%s'))
+        # }, settings.SECRET_KEY, algorithm='HS256')
+        #
+        # return token.decode('utf-8')
 
-        token = jwt.encode({
-            'id': self.pk,
-            'exp': int(dt.strftime('%s'))
-        }, settings.SECRET_KEY, algorithm='HS256')
+        refresh = RefreshToken.for_user(self)
 
-        return token.decode('utf-8')
+        return {
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+        }
 
 
 class Employee(models.Model):
