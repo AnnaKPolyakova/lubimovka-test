@@ -1,39 +1,85 @@
+from datetime import datetime, timedelta
+
+import jwt as jwt
 from django.db import models
 from phonenumber_field import modelfields
 from django.core.exceptions import ValidationError
-from django.contrib.auth.models import AbstractUser
+from django.conf import settings
+from django.contrib.auth.models import (
+    AbstractBaseUser, BaseUserManager, PermissionsMixin
+)
 
 
-class UnconfirmedUser(models.Model):
-    email = models.EmailField(
-        verbose_name='email address',
-        max_length=255,
-        unique=True,
-    )
+class UserManager(BaseUserManager):
+    use_in_migrations = True
 
-    confirmation_code = models.CharField(
-        verbose_name='confirmation code',
-        max_length=30,
-    )
+    def _create_user(self, email, password, **extra_fields):
+        """
+        Creates and saves a User with the given email and password.
+        """
+        if not email:
+            raise ValueError('The given email must be set')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_user(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_superuser', False)
+        return self._create_user(email, password, **extra_fields)
+
+    def create_superuser(self, email, password, **extra_fields):
+        extra_fields.setdefault('is_superuser', True)
+
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+
+        return self._create_user(email, password, **extra_fields)
+
+
+class User(AbstractBaseUser, PermissionsMixin):
+    email = models.EmailField(db_index=True, unique=True)
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
+    objects = UserManager()
 
     def __str__(self):
-        return f'{self.email} '
-
-
-class User(AbstractUser):
-    email = models.EmailField(
-        verbose_name='email address',
-        max_length=255,
-        unique=True,
-    )
-    bio = models.TextField(blank=True)
-    REQUIRED_FIELDS = ['email']
-
-    class Meta:
-        ordering = ['-id']
-
-    def __str__(self):
+        """ Строковое представление модели (отображается в консоли) """
         return self.email
+
+    @property
+    def token(self):
+        """
+        Позволяет получить токен пользователя путем вызова user.token, вместо
+        user._generate_jwt_token(). Декоратор @property выше делает это
+        возможным. token называется "динамическим свойством".
+        """
+        return self._generate_jwt_token()
+
+    def get_full_name(self):
+        return self.email
+
+    def get_short_name(self):
+        return self.email
+
+    def _generate_jwt_token(self):
+        """
+        Генерирует веб-токен JSON, в котором хранится идентификатор этого
+        пользователя, срок действия токена составляет 1 день от создания
+        """
+        dt = datetime.now() + timedelta(days=1)
+
+        token = jwt.encode({
+            'id': self.pk,
+            'exp': int(dt.strftime('%s'))
+        }, settings.SECRET_KEY, algorithm='HS256')
+
+        return token.decode('utf-8')
 
 
 class Employee(models.Model):

@@ -1,35 +1,30 @@
 from django.contrib.auth import get_user_model
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from rest_framework_simplejwt.tokens import RefreshToken
-
-from lubimovka.models import UnconfirmedUser
-
-User = get_user_model()
+from .models import User
 
 
-class UserSerializer(serializers.ModelSerializer):
+class RegistrationSerializer(serializers.ModelSerializer):
+    """ Сериализация регистрации пользователя и создания нового. """
+
+    # Убедитесь, что пароль содержит не менее 8 символов, не более 128,
+    # и так же что он не может быть прочитан клиентской стороной
+    password = serializers.CharField(
+        max_length=128,
+        min_length=8,
+        write_only=True
+    )
+
+    # Клиентская сторона не должна иметь возможность отправлять токен вместе с
+    # запросом на регистрацию. Сделаем его доступным только на чтение.
+    token = serializers.CharField(max_length=255, read_only=True)
 
     class Meta:
-        fields = ('first_name', 'last_name', 'username',
-                  'bio', 'role', 'email')
         model = User
+        # Перечислить все поля, которые могут быть включены в запрос
+        # или ответ, включая поля, явно указанные выше.
+        fields = ['email', 'password', 'token']
 
-
-class EmailAuthSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    confirmation_code = serializers.CharField(max_length=100)
-
-    def validate(self, data):
-        user = get_object_or_404(UnconfirmedUser, email=data['email'])
-        confirmation_code = data['confirmation_code']
-        if confirmation_code == user.confirmation_code:
-            user, created = User.objects.get_or_create(
-                email=data['email'],
-                defaults={'email': data['email']}
-            )
-            token = RefreshToken.for_user(user)
-            return {
-                'access': str(token.access_token),
-                'refresh': str(token)
-            }
+    def create(self, validated_data):
+        # Использовать метод create_user, который мы
+        # написали ранее, для создания нового пользователя.
+        return User.objects.create_user(**validated_data)
