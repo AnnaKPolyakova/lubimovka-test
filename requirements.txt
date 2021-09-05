@@ -5,9 +5,6 @@ python-dotenv==0.17.1
 django-phonenumber-field[phonenumbers]
 djangorestframework
 djangorestframework-camel-case==1.2.0
-djangorestframework-jwt==1.11.0
-djangorestframework-simplejwt
 djoser~=2.1.0
-PyJWT
 phonenumbers~=8.12.31
 drf-spectacular
