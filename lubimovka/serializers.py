@@ -27,9 +27,15 @@ class RegistrationSerializer(serializers.ModelSerializer):
         return User.objects.create_user(**validated_data)
 
 
-class EmployeesSerializer(serializers.ModelSerializer):
+class EmployeesInOrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('name', 'work_phone_number', 'personal_phone_number', 'fax')
+        model = Employee
+
+
+class EmployeesSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = "__all__"
         model = Employee
 
 
@@ -44,7 +50,7 @@ class OrganizationGetSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         search = request.query_params.get("search")
         if search is not None:
-            return EmployeesSerializer(
+            return EmployeesInOrganizationSerializer(
                 obj.employees.filter(
                     Q(name__icontains=search)
                     | Q(work_phone_number__icontains=search)
@@ -56,7 +62,7 @@ class OrganizationGetSerializer(serializers.ModelSerializer):
                 ).distinct()[:5],
                 many=True,
             ).data
-        return EmployeesSerializer(
+        return EmployeesInOrganizationSerializer(
             obj.employees.distinct()[:5],
             many=True,
         ).data

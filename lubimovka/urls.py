@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from lubimovka.views import RegistrationAPIView, OrganizationViewSet
+from lubimovka.views import RegistrationAPIView, OrganizationViewSet, \
+    EmployeeViewSet
 
 router = DefaultRouter()
 
@@ -8,6 +9,12 @@ router.register(
     prefix="organizations",
     viewset=OrganizationViewSet,
     basename="organizations",
+)
+
+router.register(
+    prefix="employees",
+    viewset=EmployeeViewSet,
+    basename="employees",
 )
 
 extra_patterns = [

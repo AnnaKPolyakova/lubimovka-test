@@ -7,7 +7,8 @@ from django.db.models import Q
 from .models import Organization, Employee, OrganizationUserRelation
 from .serializers import RegistrationSerializer, \
     OrganizationGetSerializer, OrganizationSerializer, AccessToEditSerializer, \
-    ListUsersAccessToEditSerializer
+    ListUsersAccessToEditSerializer, EmployeesInOrganizationSerializer, \
+    EmployeesSerializer
 from rest_framework.decorators import action
 from rest_framework.viewsets import ModelViewSet
 from django.shortcuts import get_object_or_404, get_list_or_404
@@ -120,3 +121,9 @@ class OrganizationViewSet(ModelViewSet):
                 safe=False,
                 status=status.HTTP_200_OK,
             )
+
+
+class EmployeeViewSet(ModelViewSet):
+    serializer_class = EmployeesSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = Employee.objects.all()
