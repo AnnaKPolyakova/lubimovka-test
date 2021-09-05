@@ -93,14 +93,16 @@ class Employee(models.Model):
         help_text="Не более 40 символов",
     )
     work_phone_number = modelfields.PhoneNumberField(
-        verbose_name="Рабочий номер телефона"
+        verbose_name="Рабочий номер телефона",
+        blank=True,
     )
     personal_phone_number = modelfields.PhoneNumberField(
-        unique=True,
-        verbose_name="Личный номер телефона"
+        verbose_name="Личный номер телефона",
+        blank=True,
     )
     fax = modelfields.PhoneNumberField(
-        verbose_name="Факс"
+        verbose_name="Факс",
+        blank=True,
     )
 
     class Meta:
@@ -113,13 +115,20 @@ class Employee(models.Model):
 
     def clean(self):
         if (
-                self.work_phone_number is None and
-                self.personal_phone_number is None and
-                self.fax is None
+                self.work_phone_number == self.personal_phone_number == self.fax
+                == ''
         ):
             raise ValidationError(
                 "Необходимо указать хотя бы один номер телефона."
             )
+        if Employee.objects.filter(
+                personal_phone_number=self.personal_phone_number
+        ).exists() and self.personal_phone_number != '':
+            raise ValidationError(
+                "Персональный номер телефона должен быть уникальным."
+            )
+
+
 
 
 class Organization(models.Model):
