@@ -56,13 +56,12 @@ class TokenSerializer(serializers.Serializer):
 
 
 class EmployeesSerializer(serializers.ModelSerializer):
-
     class Meta:
         fields = ('name', 'work_phone_number', 'personal_phone_number', 'fax')
         model = Employee
 
 
-class OrganizationSerializer(serializers.ModelSerializer):
+class OrganizationGetSerializer(serializers.ModelSerializer):
     employees = serializers.SerializerMethodField()
 
     class Meta:
@@ -86,6 +85,20 @@ class OrganizationSerializer(serializers.ModelSerializer):
                 many=True,
             ).data
         return EmployeesSerializer(
-                obj.employees.distinct()[:5],
-                many=True,
-            ).data
+            obj.employees.distinct()[:5],
+            many=True,
+        ).data
+
+
+class OrganizationSerializer(serializers.ModelSerializer):
+
+    employees = serializers.SlugRelatedField(
+        slug_field='id',
+        queryset=Employee.objects.all(),
+        default=serializers.CurrentUserDefault(),
+        many=True
+    )
+
+    class Meta:
+        fields = ['title', 'address', 'description', 'employees']
+        model = Organization

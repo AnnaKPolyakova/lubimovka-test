@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 
 from .models import Organization
 from .serializers import RegistrationSerializer, TokenSerializer, \
-    OrganizationSerializer
+    OrganizationGetSerializer, OrganizationSerializer
 from rest_framework.decorators import action
 from rest_framework.viewsets import ModelViewSet
 
@@ -48,7 +48,7 @@ class TokenAPI(APIView):
 
 
 class OrganizationViewSet(ModelViewSet):
-    serializer_class = OrganizationSerializer
+    serializer_class = OrganizationGetSerializer
     permission_classes = [IsAuthenticated]
     queryset = Organization.objects.all()
 
@@ -56,3 +56,13 @@ class OrganizationViewSet(ModelViewSet):
         user = self.request.user
         result = self.queryset.filter(access_to_edit=user)
         return result
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return OrganizationGetSerializer
+        else:
+            return OrganizationSerializer
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        serializer.save(access_to_edit=[user])
