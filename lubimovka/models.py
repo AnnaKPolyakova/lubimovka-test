@@ -16,7 +16,7 @@ class UserManager(BaseUserManager):
         if not email:
             raise ValueError('The given email must be set')
         email = self.normalize_email(email)
-        user = self.model(email=email, is_staff=True, **extra_fields)
+        user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -157,6 +157,7 @@ class Organization(models.Model):
     class Meta:
         verbose_name = "Организация"
         verbose_name_plural = "Организации"
+        ordering = ('title',)
 
 
 class OrganizationEmployeeRelation(models.Model):
@@ -177,6 +178,7 @@ class OrganizationEmployeeRelation(models.Model):
         verbose_name = "Сотрудник в организации"
         verbose_name_plural = "Сотрудники в организации"
         unique_together = ('employee', 'organization')
+        ordering = ('employee',)
 
 
 class OrganizationUserRelation(models.Model):

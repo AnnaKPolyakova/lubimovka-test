@@ -50,11 +50,9 @@ class TokenAPI(APIView):
 class OrganizationViewSet(ModelViewSet):
     serializer_class = OrganizationSerializer
     permission_classes = [IsAuthenticated]
+    queryset = Organization.objects.all()
 
     def get_queryset(self):
         user = self.request.user
-        return Organization.objects.all()
-        # return Organization.objects.filter(access_to_edit__in=user)
-
-    # def perform_create(self, serializer):
-    #     serializer.save(user=self.request.user)
+        result = self.queryset.filter(access_to_edit=user)
+        return result

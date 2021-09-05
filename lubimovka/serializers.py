@@ -1,7 +1,8 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import User, Organization
+from .models import User, Organization, Employee
 from django.contrib.auth import authenticate
+from django.db.models import Q
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -54,7 +55,37 @@ class TokenSerializer(serializers.Serializer):
         return user
 
 
-class OrganizationSerializer(serializers.ModelSerializer):
+class EmployeesSerializer(serializers.ModelSerializer):
+
     class Meta:
-        fields = '__all__'
+        fields = ('name', 'work_phone_number', 'personal_phone_number', 'fax')
+        model = Employee
+
+
+class OrganizationSerializer(serializers.ModelSerializer):
+    employees = serializers.SerializerMethodField()
+
+    class Meta:
+        fields = ['id', 'title', 'employees']
         model = Organization
+
+    def get_employees(self, obj):
+        request = self.context.get("request")
+        search = request.query_params.get("search")
+        if search is not None:
+            return EmployeesSerializer(
+                obj.employees.filter(
+                    Q(name__icontains=search)
+                    | Q(work_phone_number__icontains=search)
+                    | Q(fax__icontains=search)
+                    | Q(personal_phone_number__icontains=search)
+                    | Q(surname__icontains=search)
+                    | Q(patronymic__icontains=search)
+                    | Q(position__icontains=search)
+                ).distinct()[:5],
+                many=True,
+            ).data
+        return EmployeesSerializer(
+                obj.employees.distinct()[:5],
+                many=True,
+            ).data
