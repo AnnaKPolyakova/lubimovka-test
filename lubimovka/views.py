@@ -90,14 +90,15 @@ class OrganizationViewSet(ModelViewSet):
             organization = get_object_or_404(
                 Organization, id=request.data["organization"]
             )
-            user = get_object_or_404(
-                User, id=request.data["user"]
+            users = get_list_or_404(
+                User, id__in=request.data["user"]
             )
-            access_to_edit = get_object_or_404(
-                OrganizationUserRelation,
-                organization=organization,
-                user=user
-            )
-            access_to_edit.delete()
+            for user in users:
+                access_to_edit = get_object_or_404(
+                    OrganizationUserRelation,
+                    organization=organization,
+                    user=user
+                )
+                access_to_edit.delete()
             return JsonResponse({"success": "Ok"},
                                 status=status.HTTP_200_OK)
