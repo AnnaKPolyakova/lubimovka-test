@@ -116,7 +116,18 @@ class OrganizationViewSet(ModelViewSet):
         serializer = ListUsersAccessToEditSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             organization = get_object_or_404(
-                Organization, id=request.data["organization"]
+                Organization, id=request.data["organization"],
+                creator=request.user
             )
-            return JsonResponse({"success": "Ok"},
-                                status=status.HTTP_200_OK)
+            list_email = []
+            for i in organization.access_to_edit.all():
+                list_email.append(i.email)
+            return JsonResponse(
+                list_email,
+                safe=False,
+                status=status.HTTP_200_OK,
+            )
+
+
+
+            # return JsonResponse(list(organization.access_to_edit.all()), safe=False)
