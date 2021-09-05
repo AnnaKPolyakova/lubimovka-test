@@ -74,3 +74,8 @@ class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ['title', 'address', 'description', 'employees']
         model = Organization
+
+
+class AccessToEditSerializer(serializers.Serializer):
+    organization = serializers.IntegerField(min_value=1)
+    # user = serializers.IntegerField(min_value=1)

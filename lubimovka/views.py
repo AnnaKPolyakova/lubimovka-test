@@ -1,15 +1,19 @@
+import json
+
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from .models import Organization
+from django.db.models import Q
+from .models import Organization, Employee, OrganizationUserRelation
+from .permissions import IsCreator
 from .serializers import RegistrationSerializer, \
-    OrganizationGetSerializer, OrganizationSerializer
+    OrganizationGetSerializer, OrganizationSerializer, AccessToEditSerializer
 from rest_framework.decorators import action
 from rest_framework.viewsets import ModelViewSet
-
+from django.shortcuts import get_object_or_404, get_list_or_404
+from django.http import JsonResponse
 
 User = get_user_model()
 
@@ -40,7 +44,7 @@ class OrganizationViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        result = self.queryset.filter(access_to_edit=user)
+        result = self.queryset.filter(Q(access_to_edit=user) | Q(creator=user))
         return result
 
     def get_serializer_class(self):
@@ -51,4 +55,49 @@ class OrganizationViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-        serializer.save(access_to_edit=[user])
+        serializer.save(creator=user)
+
+    @action(
+        detail=False,
+        methods=["post"],
+        name="add_access_to_edit",
+        permission_classes=[IsAuthenticated, IsCreator],
+    )
+    def add_access_to_edit(self, request):
+        serializer = AccessToEditSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            organization = get_object_or_404(
+                Organization, id=request.data["organization"]
+            )
+            users = get_list_or_404(
+                User, id__in=request.data["user"]
+            )
+            for user in users:
+                organization.access_to_edit.add(user)
+                organization.save()
+            return JsonResponse({"success": "Ok"},
+                                status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=["delete"],
+        name="del_access_to_edit",
+        permission_classes=[IsAuthenticated, IsCreator],
+    )
+    def del_access_to_edit(self, request):
+        serializer = AccessToEditSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            organization = get_object_or_404(
+                Organization, id=request.data["organization"]
+            )
+            user = get_object_or_404(
+                User, id=request.data["user"]
+            )
+            access_to_edit = get_object_or_404(
+                OrganizationUserRelation,
+                organization=organization,
+                user=user
+            )
+            access_to_edit.delete()
+            return JsonResponse({"success": "Ok"},
+                                status=status.HTTP_200_OK)

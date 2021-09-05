@@ -130,6 +130,13 @@ class Organization(models.Model):
         Employee,
         through="OrganizationEmployeeRelation"
     )
+    creator = models.ForeignKey(
+        User,
+        verbose_name="Создатель организации",
+        related_name="creator",
+        on_delete=models.SET_NULL,
+        null=True,
+    )
     access_to_edit = models.ManyToManyField(
         User,
         through="OrganizationUserRelation"
