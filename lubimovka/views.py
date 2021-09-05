@@ -71,7 +71,7 @@ class OrganizationViewSet(ModelViewSet):
                 creator=request.user
             )
             users = get_list_or_404(
-                User, id__in=request.data["user"]
+                User, email__in=request.data["user"]
             )
             for user in users:
                 organization.access_to_edit.add(user)
@@ -94,7 +94,7 @@ class OrganizationViewSet(ModelViewSet):
                 creator=request.user
             )
             users = get_list_or_404(
-                User, id__in=request.data["user"]
+                User, email__in=request.data["user"]
             )
             for user in users:
                 access_to_edit = get_object_or_404(

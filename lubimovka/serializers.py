@@ -79,7 +79,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
 class AccessToEditSerializer(serializers.Serializer):
     organization = serializers.IntegerField(min_value=1)
     user = serializers.ListField(
-        child=serializers.IntegerField(min_value=1,max_value=100)
+        child=serializers.EmailField()
     )
 
 
