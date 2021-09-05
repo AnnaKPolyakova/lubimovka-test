@@ -1,5 +1,3 @@
-import json
-
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -19,17 +17,12 @@ User = get_user_model()
 
 
 class RegistrationAPIView(APIView):
-    """
-    Разрешить всем пользователям (аутентифицированным и нет) доступ к данному эндпоинту.
-    """
+
     permission_classes = (AllowAny,)
     serializer_class = RegistrationSerializer
 
     def post(self, request):
-        # user = request.data.get('user', {})
 
-        # Паттерн создания сериализатора, валидации и сохранения - довольно
-        # стандартный, и его можно часто увидеть в реальных проектах.
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -127,7 +120,3 @@ class OrganizationViewSet(ModelViewSet):
                 safe=False,
                 status=status.HTTP_200_OK,
             )
-
-
-
-            # return JsonResponse(list(organization.access_to_edit.all()), safe=False)
