@@ -7,9 +7,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Q
 from .models import Organization, Employee, OrganizationUserRelation
-from .permissions import IsCreator
 from .serializers import RegistrationSerializer, \
-    OrganizationGetSerializer, OrganizationSerializer, AccessToEditSerializer
+    OrganizationGetSerializer, OrganizationSerializer, AccessToEditSerializer, \
+    ListUsersAccessToEditSerializer
 from rest_framework.decorators import action
 from rest_framework.viewsets import ModelViewSet
 from django.shortcuts import get_object_or_404, get_list_or_404
@@ -61,13 +61,14 @@ class OrganizationViewSet(ModelViewSet):
         detail=False,
         methods=["post"],
         name="add_access_to_edit",
-        permission_classes=[IsAuthenticated, IsCreator],
+        permission_classes=[IsAuthenticated],
     )
     def add_access_to_edit(self, request):
         serializer = AccessToEditSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             organization = get_object_or_404(
-                Organization, id=request.data["organization"]
+                Organization, id=request.data["organization"],
+                creator=request.user
             )
             users = get_list_or_404(
                 User, id__in=request.data["user"]
@@ -82,13 +83,15 @@ class OrganizationViewSet(ModelViewSet):
         detail=False,
         methods=["delete"],
         name="del_access_to_edit",
-        permission_classes=[IsAuthenticated, IsCreator],
+        permission_classes=[IsAuthenticated],
     )
     def del_access_to_edit(self, request):
         serializer = AccessToEditSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             organization = get_object_or_404(
-                Organization, id=request.data["organization"]
+                Organization,
+                id=request.data["organization"],
+                creator=request.user
             )
             users = get_list_or_404(
                 User, id__in=request.data["user"]
@@ -100,5 +103,20 @@ class OrganizationViewSet(ModelViewSet):
                     user=user
                 )
                 access_to_edit.delete()
+            return JsonResponse({"success": "Ok"},
+                                status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=["get"],
+        name="get_list_users_access_to_edit",
+        permission_classes=[IsAuthenticated],
+    )
+    def get_list_users_access_to_edit(self, request):
+        serializer = ListUsersAccessToEditSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            organization = get_object_or_404(
+                Organization, id=request.data["organization"]
+            )
             return JsonResponse({"success": "Ok"},
                                 status=status.HTTP_200_OK)
