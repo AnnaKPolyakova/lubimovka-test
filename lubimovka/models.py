@@ -129,8 +129,6 @@ class Employee(models.Model):
             )
 
 
-
-
 class Organization(models.Model):
     title = models.CharField(
         max_length=40,
