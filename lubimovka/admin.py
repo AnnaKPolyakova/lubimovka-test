@@ -1,15 +1,20 @@
 from django.contrib import admin
 
-from .models import Employee, Organization, OrganizationEmployeeRelation
+from .models import Employee, Organization
 
 
 class OrganizationEmployeeRelationAdminInline(admin.TabularInline):
     model = Organization.employees.through
     extra = 0
+    verbose_name_plural = "Cотрудники организации"
+
+
+class OrganizationUserRelationAdminInline(admin.TabularInline):
+    model = Organization.access_to_edit.through
+    extra = 0
     verbose_name_plural = (
-        "Cотрудники организации"
+        "Пользователи с доступом к редактированию"
     )
-    # raw_id_fields = ("employee",)
 
 
 class EmployeeAdmin(admin.ModelAdmin):
@@ -19,6 +24,7 @@ class EmployeeAdmin(admin.ModelAdmin):
 class OrganizationAdmin(admin.ModelAdmin):
     inlines = (
         OrganizationEmployeeRelationAdminInline,
+        OrganizationUserRelationAdminInline,
     )
     list_display = ("title", "address")
 

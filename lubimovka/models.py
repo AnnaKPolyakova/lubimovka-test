@@ -1,22 +1,18 @@
-from datetime import datetime, timedelta
-
-from rest_framework_simplejwt.tokens import RefreshToken
 from django.db import models
 from phonenumber_field import modelfields
 from django.core.exceptions import ValidationError
-from django.conf import settings
 from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin
 )
+
+from lubimovka.utils import get_tokens_for_user
 
 
 class UserManager(BaseUserManager):
     use_in_migrations = True
 
     def _create_user(self, email, password, **extra_fields):
-        """
-        Creates and saves a User with the given email and password.
-        """
+
         if not email:
             raise ValueError('The given email must be set')
         email = self.normalize_email(email)
@@ -49,7 +45,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     def __str__(self):
-        """ Строковое представление модели (отображается в консоли) """
         return self.email
 
     @property
@@ -72,21 +67,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         Генерирует веб-токен JSON, в котором хранится идентификатор этого
         пользователя, срок действия токена составляет 1 день от создания
         """
-        # dt = datetime.now() + timedelta(days=1)
-        #
-        # token = jwt.encode({
-        #     'id': self.pk,
-        #     'exp': int(dt.strftime('%s'))
-        # }, settings.SECRET_KEY, algorithm='HS256')
-        #
-        # return token.decode('utf-8')
-
-        refresh = RefreshToken.for_user(self)
-
-        return {
-            "access": str(refresh.access_token),
-            "refresh": str(refresh),
-        }
+        refresh = get_tokens_for_user(self)
+        return refresh.get('access')
 
 
 class Employee(models.Model):
@@ -160,6 +142,10 @@ class Organization(models.Model):
         Employee,
         through="OrganizationEmployeeRelation"
     )
+    access_to_edit = models.ManyToManyField(
+        User,
+        through="OrganizationUserRelation"
+    )
 
     class Meta:
         verbose_name = "Организация"
@@ -185,5 +171,22 @@ class OrganizationEmployeeRelation(models.Model):
         verbose_name_plural = "Сотрудники в организации"
         unique_together = ('employee', 'organization')
 
-    def __str__(self):
-        return self.employee
+
+class OrganizationUserRelation(models.Model):
+    user = models.ForeignKey(
+        User,
+        verbose_name="Пользователь",
+        on_delete=models.SET_NULL,
+        null=True,
+    )
+    organization = models.ForeignKey(
+        Organization,
+        verbose_name="Организация",
+        on_delete=models.SET_NULL,
+        null=True,
+    )
+
+    class Meta:
+        verbose_name = "Пользователь с доступом к редактированию"
+        verbose_name_plural = "Пользователи с доступом к редактированию"
+        unique_together = ('user', 'organization')
