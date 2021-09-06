@@ -1,8 +1,11 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from lubimovka.views import (EmployeeViewSet, OrganizationViewSet,
-                             RegistrationAPIView)
+from lubimovka.views import (
+    EmployeeViewSet,
+    OrganizationViewSet,
+    RegistrationAPIView,
+)
 
 router = DefaultRouter()
 

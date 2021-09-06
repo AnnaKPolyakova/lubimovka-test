@@ -1,5 +1,8 @@
-from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
-                                        PermissionsMixin)
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin,
+)
 from django.core.exceptions import ValidationError
 from django.db import models
 from phonenumber_field import modelfields
@@ -96,15 +99,24 @@ class Employee(models.Model):
         )
 
     def clean(self):
-        if self.work_phone_number == self.personal_phone_number == self.fax == "":
-            raise ValidationError("Необходимо указать хотя бы один номер телефона.")
+        if (
+            self.work_phone_number
+            == self.personal_phone_number
+            == self.fax
+            == ""
+        ):
+            raise ValidationError(
+                "Необходимо указать хотя бы один номер телефона."
+            )
         if (
             Employee.objects.filter(
                 personal_phone_number=self.personal_phone_number
             ).exists()
             and self.personal_phone_number != ""
         ):
-            raise ValidationError("Персональный номер телефона должен быть уникальным.")
+            raise ValidationError(
+                "Персональный номер телефона должен быть уникальным."
+            )
 
 
 class Organization(models.Model):
@@ -123,7 +135,9 @@ class Organization(models.Model):
         verbose_name="Описание",
         help_text="Краткое описание",
     )
-    employees = models.ManyToManyField(Employee, through="OrganizationEmployeeRelation")
+    employees = models.ManyToManyField(
+        Employee, through="OrganizationEmployeeRelation"
+    )
     creator = models.ForeignKey(
         User,
         verbose_name="Создатель организации",
@@ -131,7 +145,9 @@ class Organization(models.Model):
         on_delete=models.SET_NULL,
         null=True,
     )
-    access_to_edit = models.ManyToManyField(User, through="OrganizationUserRelation")
+    access_to_edit = models.ManyToManyField(
+        User, through="OrganizationUserRelation"
+    )
 
     class Meta:
         verbose_name = "Организация"

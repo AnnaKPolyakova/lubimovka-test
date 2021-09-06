@@ -2,31 +2,35 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from rest_framework import serializers
 
-from .models import Employee, Organization, User
+from .models import Employee, Organization
+
+User = get_user_model
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
     """Сериализация регистрации пользователя и создания нового."""
 
-    # Убедитесь, что пароль содержит не менее 8 символов, не более 128,
-    # и так же что он не может быть прочитан клиентской стороной
-    password = serializers.CharField(max_length=128, min_length=8, write_only=True)
+    password = serializers.CharField(
+        max_length=128, min_length=8, write_only=True
+    )
 
     class Meta:
         model = User
-        # Перечислить все поля, которые могут быть включены в запрос
-        # или ответ, включая поля, явно указанные выше.
         fields = ["email", "password"]
 
     def create(self, validated_data):
-        # Использовать метод create_user, который мы
-        # написали ранее, для создания нового пользователя.
         return User.objects.create_user(**validated_data)
 
 
 class EmployeesInOrganizationSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ("id", "name", "work_phone_number", "personal_phone_number", "fax")
+        fields = (
+            "id",
+            "name",
+            "work_phone_number",
+            "personal_phone_number",
+            "fax",
+        )
         model = Employee
 
 

@@ -10,11 +10,14 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from .models import Employee, Organization, OrganizationUserRelation
-from .serializers import (AccessToEditSerializer,
-                          EmployeesInOrganizationSerializer,
-                          EmployeesSerializer, ListUsersAccessToEditSerializer,
-                          OrganizationGetSerializer, OrganizationSerializer,
-                          RegistrationSerializer)
+from .serializers import (
+    AccessToEditSerializer,
+    EmployeesSerializer,
+    ListUsersAccessToEditSerializer,
+    OrganizationGetSerializer,
+    OrganizationSerializer,
+    RegistrationSerializer,
+)
 
 User = get_user_model()
 
@@ -63,7 +66,9 @@ class OrganizationViewSet(ModelViewSet):
         serializer = AccessToEditSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             organization = get_object_or_404(
-                Organization, id=request.data["organization"], creator=request.user
+                Organization,
+                id=request.data["organization"],
+                creator=request.user,
             )
             users = get_list_or_404(User, email__in=request.data["user"])
             for user in users:
@@ -81,12 +86,16 @@ class OrganizationViewSet(ModelViewSet):
         serializer = AccessToEditSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             organization = get_object_or_404(
-                Organization, id=request.data["organization"], creator=request.user
+                Organization,
+                id=request.data["organization"],
+                creator=request.user,
             )
             users = get_list_or_404(User, email__in=request.data["user"])
             for user in users:
                 access_to_edit = get_object_or_404(
-                    OrganizationUserRelation, organization=organization, user=user
+                    OrganizationUserRelation,
+                    organization=organization,
+                    user=user,
                 )
                 access_to_edit.delete()
             return JsonResponse({"success": "Ok"}, status=status.HTTP_200_OK)
@@ -101,7 +110,9 @@ class OrganizationViewSet(ModelViewSet):
         serializer = ListUsersAccessToEditSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             organization = get_object_or_404(
-                Organization, id=request.data["organization"], creator=request.user
+                Organization,
+                id=request.data["organization"],
+                creator=request.user,
             )
             list_email = []
             for i in organization.access_to_edit.all():
