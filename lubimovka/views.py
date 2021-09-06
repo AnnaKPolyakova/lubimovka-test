@@ -2,16 +2,16 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_list_or_404, get_object_or_404
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
 
 from .models import Employee, Organization, OrganizationUserRelation
-from .permission import IsCreator
+from .permission import IsCreator, IsCreatorOrUserAddToAccessToEdit
 from .serializers import (AccessToEditSerializer, EmployeesSerializer,
                           OrganizationGetSerializer, OrganizationSerializer,
                           RegistrationSerializer)
@@ -35,7 +35,7 @@ class RegistrationAPIView(APIView):
 
 class OrganizationViewSet(ModelViewSet):
     serializer_class = OrganizationGetSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsCreatorOrUserAddToAccessToEdit]
     queryset = Organization.objects.all()
 
     def get_queryset(self):
@@ -77,16 +77,18 @@ class AccessToEditView(APIView):
             status=status.HTTP_200_OK,
         )
 
-    @swagger_auto_schema(request_body=openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        properties={
-            'user': openapi.Schema(
-                type=openapi.TYPE_ARRAY,
-                items=openapi.Items(type=openapi.TYPE_STRING),
-                description="Укажите email пользователей в формате списка"
-            )
-        }
-    ))
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                "user": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_STRING),
+                    description="Укажите email пользователей в формате списка",
+                )
+            },
+        )
+    )
     def post(self, request, organization_id):
         serializer = AccessToEditSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
@@ -104,16 +106,18 @@ class AccessToEditView(APIView):
                 status=status.HTTP_200_OK,
             )
 
-    @swagger_auto_schema(request_body=openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        properties={
-            'user': openapi.Schema(
-                type=openapi.TYPE_ARRAY,
-                items=openapi.Items(type=openapi.TYPE_STRING),
-                description="Укажите email пользователей в формате списка"
-            )
-        }
-    ))
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                "user": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_STRING),
+                    description="Укажите email пользователей в формате списка",
+                )
+            },
+        )
+    )
     def delete(self, request, organization_id):
         serializer = AccessToEditSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
