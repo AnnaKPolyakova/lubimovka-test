@@ -3,15 +3,16 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_list_or_404, get_object_or_404
 from rest_framework import status
-from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 from .models import Employee, Organization, OrganizationUserRelation
+from .permission import IsCreator
 from .serializers import (AccessToEditSerializer, EmployeesSerializer,
-                          ListUsersAccessToEditSerializer,
                           OrganizationGetSerializer, OrganizationSerializer,
                           RegistrationSerializer)
 
@@ -54,19 +55,42 @@ class OrganizationViewSet(ModelViewSet):
         user = self.request.user
         serializer.save(creator=user)
 
-    @action(
-        detail=False,
-        methods=["post"],
-        name="add_access_to_edit",
-        permission_classes=[IsAuthenticated],
-    )
-    def add_access_to_edit(self, request):
+
+class EmployeeViewSet(ModelViewSet):
+    serializer_class = EmployeesSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = Employee.objects.all()
+
+
+class AccessToEditView(APIView):
+    permission_classes = [IsAuthenticated, IsCreator]
+    serializer_class = AccessToEditSerializer
+
+    def get(self, request, organization_id):
+        organization = get_object_or_404(
+            Organization,
+            id=organization_id,
+        )
+        return JsonResponse(
+            [user.email for user in organization.access_to_edit.all()],
+            safe=False,
+            status=status.HTTP_200_OK,
+        )
+
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'user': openapi.Schema(type=openapi.TYPE_NUMBER,
+                                 description='Укажите email пользователей в '
+                                             'формате списка'),
+        }
+    ))
+    def post(self, request, organization_id):
         serializer = AccessToEditSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             organization = get_object_or_404(
                 Organization,
-                id=request.data["organization"],
-                creator=request.user,
+                id=organization_id,
             )
             users = get_list_or_404(User, email__in=request.data["user"])
             for user in users:
@@ -78,19 +102,12 @@ class OrganizationViewSet(ModelViewSet):
                 status=status.HTTP_200_OK,
             )
 
-    @action(
-        detail=False,
-        methods=["delete"],
-        name="del_access_to_edit",
-        permission_classes=[IsAuthenticated],
-    )
-    def del_access_to_edit(self, request):
+    def delete(self, request, organization_id):
         serializer = AccessToEditSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             organization = get_object_or_404(
                 Organization,
-                id=request.data["organization"],
-                creator=request.user,
+                id=organization_id,
             )
             users = get_list_or_404(User, email__in=request.data["user"])
             for user in users:
@@ -105,32 +122,3 @@ class OrganizationViewSet(ModelViewSet):
                 safe=False,
                 status=status.HTTP_200_OK,
             )
-
-    @action(
-        detail=False,
-        methods=["get"],
-        name="get_list_users_access_to_edit",
-        permission_classes=[IsAuthenticated],
-    )
-    def get_list_users_access_to_edit(self, request):
-        serializer = ListUsersAccessToEditSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            organization = get_object_or_404(
-                Organization,
-                id=request.data["organization"],
-                creator=request.user,
-            )
-            list_email = []
-            for i in organization.access_to_edit.all():
-                list_email.append(i.email)
-            return JsonResponse(
-                list_email,
-                safe=False,
-                status=status.HTTP_200_OK,
-            )
-
-
-class EmployeeViewSet(ModelViewSet):
-    serializer_class = EmployeesSerializer
-    permission_classes = [IsAuthenticated]
-    queryset = Employee.objects.all()

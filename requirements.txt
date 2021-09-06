@@ -7,6 +7,6 @@ djangorestframework
 djangorestframework-camel-case==1.2.0
 djoser~=2.1.0
 phonenumbers~=8.12.31
-drf-spectacular
 isort
 black
+drf-yasg

@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'phonenumber_field',
-    'drf_spectacular',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
