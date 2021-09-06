@@ -41,6 +41,29 @@ class EmployeesSerializer(serializers.ModelSerializer):
         model = Employee
 
     def validate(self, data):
+        if "personal_phone_number" in self.context["request"].data:
+            if self.context["request"].method in ("POST",):
+                if self.context["request"].data["personal_phone_number"] in [
+                    employee.personal_phone_number
+                    for employee in Employee.objects.all()
+                ]:
+                    raise serializers.ValidationError(
+                        "Личный номера телефона должен быть уникальным."
+                    )
+            elif self.context["request"].method in ("PUT", "PATCH"):
+                if self.context["request"].data["personal_phone_number"] in [
+                    employee.personal_phone_number
+                    for employee in Employee.objects.filter(
+                        ~Q(
+                            id=self.context["request"].parser_context[
+                                "kwargs"
+                            ]["pk"]
+                        )
+                    )
+                ]:
+                    raise serializers.ValidationError(
+                        "Личный номера телефона должен быть уникальным."
+                    )
         if self.context["request"].method in ("POST", "PUT"):
             fields = ["work_phone_number", "personal_phone_number", "fax"]
             for field in fields:
@@ -49,7 +72,7 @@ class EmployeesSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Необходимо указать хотя бы один номер телефона."
             )
-        if self.context["request"].method == "PATCH":
+        elif self.context["request"].method == "PATCH":
             employee = get_object_or_404(
                 Employee,
                 id=self.context["request"].parser_context["kwargs"]["pk"],
