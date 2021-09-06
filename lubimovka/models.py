@@ -161,7 +161,7 @@ class Organization(models.Model):
     class Meta:
         verbose_name = "Организация"
         verbose_name_plural = "Организации"
-        ordering = ("id",)
+        ordering = ("title",)
 
 
 class OrganizationEmployeeRelation(models.Model):
