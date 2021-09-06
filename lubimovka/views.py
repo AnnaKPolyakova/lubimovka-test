@@ -80,9 +80,11 @@ class AccessToEditView(APIView):
     @swagger_auto_schema(request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
-            'user': openapi.Schema(type=openapi.TYPE_NUMBER,
-                                 description='Укажите email пользователей в '
-                                             'формате списка'),
+            'user': openapi.Schema(
+                type=openapi.TYPE_ARRAY,
+                items=openapi.Items(type=openapi.TYPE_STRING),
+                description="Укажите email пользователей в формате списка"
+            )
         }
     ))
     def post(self, request, organization_id):
@@ -102,6 +104,16 @@ class AccessToEditView(APIView):
                 status=status.HTTP_200_OK,
             )
 
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'user': openapi.Schema(
+                type=openapi.TYPE_ARRAY,
+                items=openapi.Items(type=openapi.TYPE_STRING),
+                description="Укажите email пользователей в формате списка"
+            )
+        }
+    ))
     def delete(self, request, organization_id):
         serializer = AccessToEditSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
