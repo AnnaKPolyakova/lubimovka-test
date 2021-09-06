@@ -1,8 +1,5 @@
-from django.contrib.auth.models import (
-    AbstractBaseUser,
-    BaseUserManager,
-    PermissionsMixin,
-)
+from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
+                                        PermissionsMixin)
 from django.core.exceptions import ValidationError
 from django.db import models
 from phonenumber_field import modelfields
@@ -149,10 +146,22 @@ class Organization(models.Model):
         User, through="OrganizationUserRelation"
     )
 
+    def as_json(self):
+        list_email = []
+        for i in self.access_to_edit.all():
+            list_email.append(i.email)
+        return dict(
+            id=self.id,
+            title=self.title,
+            address=self.address,
+            description=self.description,
+            access_to_edit=list_email,
+        )
+
     class Meta:
         verbose_name = "Организация"
         verbose_name_plural = "Организации"
-        ordering = ("title",)
+        ordering = ("id",)
 
 
 class OrganizationEmployeeRelation(models.Model):

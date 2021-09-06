@@ -10,14 +10,10 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from .models import Employee, Organization, OrganizationUserRelation
-from .serializers import (
-    AccessToEditSerializer,
-    EmployeesSerializer,
-    ListUsersAccessToEditSerializer,
-    OrganizationGetSerializer,
-    OrganizationSerializer,
-    RegistrationSerializer,
-)
+from .serializers import (AccessToEditSerializer, EmployeesSerializer,
+                          ListUsersAccessToEditSerializer,
+                          OrganizationGetSerializer, OrganizationSerializer,
+                          RegistrationSerializer)
 
 User = get_user_model()
 
@@ -43,7 +39,9 @@ class OrganizationViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        result = self.queryset.filter(Q(access_to_edit=user) | Q(creator=user))
+        result = self.queryset.filter(
+            Q(access_to_edit=user) | Q(creator=user)
+        ).distinct()
         return result
 
     def get_serializer_class(self):
@@ -74,7 +72,11 @@ class OrganizationViewSet(ModelViewSet):
             for user in users:
                 organization.access_to_edit.add(user)
                 organization.save()
-            return JsonResponse({"success": "Ok"}, status=status.HTTP_200_OK)
+            return JsonResponse(
+                organization.as_json(),
+                safe=False,
+                status=status.HTTP_200_OK,
+            )
 
     @action(
         detail=False,
@@ -98,7 +100,11 @@ class OrganizationViewSet(ModelViewSet):
                     user=user,
                 )
                 access_to_edit.delete()
-            return JsonResponse({"success": "Ok"}, status=status.HTTP_200_OK)
+            return JsonResponse(
+                organization.as_json(),
+                safe=False,
+                status=status.HTTP_200_OK,
+            )
 
     @action(
         detail=False,
