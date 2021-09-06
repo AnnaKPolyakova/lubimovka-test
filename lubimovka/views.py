@@ -1,18 +1,20 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Q
+from django.http import JsonResponse
+from django.shortcuts import get_list_or_404, get_object_or_404
 from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db.models import Q
-from .models import Organization, Employee, OrganizationUserRelation
-from .serializers import RegistrationSerializer, \
-    OrganizationGetSerializer, OrganizationSerializer, AccessToEditSerializer, \
-    ListUsersAccessToEditSerializer, EmployeesInOrganizationSerializer, \
-    EmployeesSerializer
-from rest_framework.decorators import action
 from rest_framework.viewsets import ModelViewSet
-from django.shortcuts import get_object_or_404, get_list_or_404
-from django.http import JsonResponse
+
+from .models import Employee, Organization, OrganizationUserRelation
+from .serializers import (AccessToEditSerializer,
+                          EmployeesInOrganizationSerializer,
+                          EmployeesSerializer, ListUsersAccessToEditSerializer,
+                          OrganizationGetSerializer, OrganizationSerializer,
+                          RegistrationSerializer)
 
 User = get_user_model()
 
@@ -42,7 +44,7 @@ class OrganizationViewSet(ModelViewSet):
         return result
 
     def get_serializer_class(self):
-        if self.request.method == 'GET':
+        if self.request.method == "GET":
             return OrganizationGetSerializer
         else:
             return OrganizationSerializer
@@ -61,17 +63,13 @@ class OrganizationViewSet(ModelViewSet):
         serializer = AccessToEditSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             organization = get_object_or_404(
-                Organization, id=request.data["organization"],
-                creator=request.user
+                Organization, id=request.data["organization"], creator=request.user
             )
-            users = get_list_or_404(
-                User, email__in=request.data["user"]
-            )
+            users = get_list_or_404(User, email__in=request.data["user"])
             for user in users:
                 organization.access_to_edit.add(user)
                 organization.save()
-            return JsonResponse({"success": "Ok"},
-                                status=status.HTTP_200_OK)
+            return JsonResponse({"success": "Ok"}, status=status.HTTP_200_OK)
 
     @action(
         detail=False,
@@ -83,22 +81,15 @@ class OrganizationViewSet(ModelViewSet):
         serializer = AccessToEditSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             organization = get_object_or_404(
-                Organization,
-                id=request.data["organization"],
-                creator=request.user
+                Organization, id=request.data["organization"], creator=request.user
             )
-            users = get_list_or_404(
-                User, email__in=request.data["user"]
-            )
+            users = get_list_or_404(User, email__in=request.data["user"])
             for user in users:
                 access_to_edit = get_object_or_404(
-                    OrganizationUserRelation,
-                    organization=organization,
-                    user=user
+                    OrganizationUserRelation, organization=organization, user=user
                 )
                 access_to_edit.delete()
-            return JsonResponse({"success": "Ok"},
-                                status=status.HTTP_200_OK)
+            return JsonResponse({"success": "Ok"}, status=status.HTTP_200_OK)
 
     @action(
         detail=False,
@@ -110,8 +101,7 @@ class OrganizationViewSet(ModelViewSet):
         serializer = ListUsersAccessToEditSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             organization = get_object_or_404(
-                Organization, id=request.data["organization"],
-                creator=request.user
+                Organization, id=request.data["organization"], creator=request.user
             )
             list_email = []
             for i in organization.access_to_edit.all():

@@ -12,9 +12,7 @@ class OrganizationEmployeeRelationAdminInline(admin.TabularInline):
 class OrganizationUserRelationAdminInline(admin.TabularInline):
     model = Organization.access_to_edit.through
     extra = 0
-    verbose_name_plural = (
-        "Пользователи с доступом к редактированию"
-    )
+    verbose_name_plural = "Пользователи с доступом к редактированию"
 
 
 class EmployeeAdmin(admin.ModelAdmin):

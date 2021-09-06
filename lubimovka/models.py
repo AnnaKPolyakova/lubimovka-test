@@ -1,9 +1,8 @@
+from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
+                                        PermissionsMixin)
+from django.core.exceptions import ValidationError
 from django.db import models
 from phonenumber_field import modelfields
-from django.core.exceptions import ValidationError
-from django.contrib.auth.models import (
-    AbstractBaseUser, BaseUserManager, PermissionsMixin
-)
 
 
 class UserManager(BaseUserManager):
@@ -12,7 +11,7 @@ class UserManager(BaseUserManager):
     def _create_user(self, email, password, **extra_fields):
 
         if not email:
-            raise ValueError('The given email must be set')
+            raise ValueError("The given email must be set")
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
@@ -20,14 +19,14 @@ class UserManager(BaseUserManager):
         return user
 
     def create_user(self, email, password=None, **extra_fields):
-        extra_fields.setdefault('is_superuser', False)
+        extra_fields.setdefault("is_superuser", False)
         return self._create_user(email, password, **extra_fields)
 
     def create_superuser(self, email, password, **extra_fields):
-        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault("is_superuser", True)
 
-        if extra_fields.get('is_superuser') is not True:
-            raise ValueError('Superuser must have is_superuser=True.')
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Superuser must have is_superuser=True.")
 
         return self._create_user(email, password, **extra_fields)
 
@@ -38,7 +37,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
     objects = UserManager()
 
@@ -91,23 +90,21 @@ class Employee(models.Model):
         verbose_name_plural = "Сотрудники"
 
     def __str__(self):
-        return f'{self.name} {self.surname} {self.patronymic}, должность: ' \
-               f'{self.position} '
+        return (
+            f"{self.name} {self.surname} {self.patronymic}, должность: "
+            f"{self.position} "
+        )
 
     def clean(self):
+        if self.work_phone_number == self.personal_phone_number == self.fax == "":
+            raise ValidationError("Необходимо указать хотя бы один номер телефона.")
         if (
-                self.work_phone_number == self.personal_phone_number == self.fax
-                == ''
-        ):
-            raise ValidationError(
-                "Необходимо указать хотя бы один номер телефона."
-            )
-        if Employee.objects.filter(
+            Employee.objects.filter(
                 personal_phone_number=self.personal_phone_number
-        ).exists() and self.personal_phone_number != '':
-            raise ValidationError(
-                "Персональный номер телефона должен быть уникальным."
-            )
+            ).exists()
+            and self.personal_phone_number != ""
+        ):
+            raise ValidationError("Персональный номер телефона должен быть уникальным.")
 
 
 class Organization(models.Model):
@@ -126,10 +123,7 @@ class Organization(models.Model):
         verbose_name="Описание",
         help_text="Краткое описание",
     )
-    employees = models.ManyToManyField(
-        Employee,
-        through="OrganizationEmployeeRelation"
-    )
+    employees = models.ManyToManyField(Employee, through="OrganizationEmployeeRelation")
     creator = models.ForeignKey(
         User,
         verbose_name="Создатель организации",
@@ -137,15 +131,12 @@ class Organization(models.Model):
         on_delete=models.SET_NULL,
         null=True,
     )
-    access_to_edit = models.ManyToManyField(
-        User,
-        through="OrganizationUserRelation"
-    )
+    access_to_edit = models.ManyToManyField(User, through="OrganizationUserRelation")
 
     class Meta:
         verbose_name = "Организация"
         verbose_name_plural = "Организации"
-        ordering = ('title',)
+        ordering = ("title",)
 
 
 class OrganizationEmployeeRelation(models.Model):
@@ -165,8 +156,8 @@ class OrganizationEmployeeRelation(models.Model):
     class Meta:
         verbose_name = "Сотрудник в организации"
         verbose_name_plural = "Сотрудники в организации"
-        unique_together = ('employee', 'organization')
-        ordering = ('employee',)
+        unique_together = ("employee", "organization")
+        ordering = ("employee",)
 
 
 class OrganizationUserRelation(models.Model):
@@ -186,4 +177,4 @@ class OrganizationUserRelation(models.Model):
     class Meta:
         verbose_name = "Пользователь с доступом к редактированию"
         verbose_name_plural = "Пользователи с доступом к редактированию"
-        unique_together = ('user', 'organization')
+        unique_together = ("user", "organization")

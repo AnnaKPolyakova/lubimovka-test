@@ -1,25 +1,22 @@
 from django.contrib.auth import get_user_model
-from rest_framework import serializers
-from .models import User, Organization, Employee
 from django.db.models import Q
+from rest_framework import serializers
+
+from .models import Employee, Organization, User
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
-    """ Сериализация регистрации пользователя и создания нового. """
+    """Сериализация регистрации пользователя и создания нового."""
 
     # Убедитесь, что пароль содержит не менее 8 символов, не более 128,
     # и так же что он не может быть прочитан клиентской стороной
-    password = serializers.CharField(
-        max_length=128,
-        min_length=8,
-        write_only=True
-    )
+    password = serializers.CharField(max_length=128, min_length=8, write_only=True)
 
     class Meta:
         model = User
         # Перечислить все поля, которые могут быть включены в запрос
         # или ответ, включая поля, явно указанные выше.
-        fields = ['email', 'password']
+        fields = ["email", "password"]
 
     def create(self, validated_data):
         # Использовать метод create_user, который мы
@@ -29,7 +26,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
 class EmployeesInOrganizationSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ('name', 'work_phone_number', 'personal_phone_number', 'fax')
+        fields = ("id", "name", "work_phone_number", "personal_phone_number", "fax")
         model = Employee
 
 
@@ -43,7 +40,7 @@ class OrganizationGetSerializer(serializers.ModelSerializer):
     employees = serializers.SerializerMethodField()
 
     class Meta:
-        fields = ['id', 'title', 'employees']
+        fields = ["id", "title", "employees"]
         model = Organization
 
     def get_employees(self, obj):
@@ -71,22 +68,20 @@ class OrganizationGetSerializer(serializers.ModelSerializer):
 class OrganizationSerializer(serializers.ModelSerializer):
 
     employees = serializers.SlugRelatedField(
-        slug_field='id',
+        slug_field="id",
         queryset=Employee.objects.all(),
         default=serializers.CurrentUserDefault(),
-        many=True
+        many=True,
     )
 
     class Meta:
-        fields = ['title', 'address', 'description', 'employees']
+        fields = ["title", "address", "description", "employees"]
         model = Organization
 
 
 class AccessToEditSerializer(serializers.Serializer):
     organization = serializers.IntegerField(min_value=1)
-    user = serializers.ListField(
-        child=serializers.EmailField()
-    )
+    user = serializers.ListField(child=serializers.EmailField())
 
 
 class ListUsersAccessToEditSerializer(serializers.Serializer):
