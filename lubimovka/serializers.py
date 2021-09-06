@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from .models import Employee, Organization
@@ -38,6 +39,35 @@ class EmployeesSerializer(serializers.ModelSerializer):
     class Meta:
         fields = "__all__"
         model = Employee
+
+    def validate(self, data):
+        if self.context["request"].method in ("POST", "PUT"):
+            fields = ["work_phone_number", "personal_phone_number", "fax"]
+            for field in fields:
+                if field in self.context["request"].data:
+                    return data
+            raise serializers.ValidationError(
+                "Необходимо указать хотя бы один номер телефона."
+            )
+        if self.context["request"].method == "PATCH":
+            employee = get_object_or_404(
+                Employee,
+                id=self.context["request"].parser_context["kwargs"]["pk"],
+            )
+            fields = ["work_phone_number", "personal_phone_number", "fax"]
+            phone_numbers = {
+                "work_phone_number": employee.work_phone_number,
+                "personal_phone_number": employee.personal_phone_number,
+                "fax": employee.fax,
+            }
+            for field in fields:
+                if field in self.context["request"].data:
+                    phone_numbers[field] = self.context["request"].data[field]
+            if list(phone_numbers.values()) == ["", "", ""]:
+                raise serializers.ValidationError(
+                    "Необходимо указать хотя бы один номер телефона."
+                )
+        return data
 
 
 class OrganizationGetSerializer(serializers.ModelSerializer):
@@ -85,4 +115,3 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
 class AccessToEditSerializer(serializers.Serializer):
     user = serializers.ListField(child=serializers.EmailField())
-
